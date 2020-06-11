@@ -47,8 +47,11 @@ for i in df_deaths_cum.columns:
 #create HTML layout
 app.layout = html.Div([
         ### Row One - header ###
-        html.Div([html.Div([html.H2('Coronavirus information dashboard')], className='col-12 col-md-9'), 
-                    html.Div([html.H2('MLS-Dashboards')] , className='col-md-3 hidden-sm-down badge badge-secondary')], className='row'),
+        html.Div([html.Div([html.Img( src='assets/logo2.png')], className='col-12 col-md-3'),
+                html.Div([html.H2('Coronavirus information dashboard')], className='col-12 col-md-9'),
+                 ]
+                    
+            , className='row'),
         html.Br(),
         ### Row Two- dropdowns ###
         html.Div([
@@ -128,7 +131,8 @@ def update_graph(countries, start_date, end_date):
     fig = {'data':data,
             'layout':go.Layout(title='Confirmed Covid 19 deaths by country', 
                             yaxis={'title':'confirmed deaths'},
-                            hovermode='x unified',),}
+                            hovermode='x unified',
+                            legend_orientation="h"),}
     return fig
 
 @app.callback(Output('my-bar-chart', 'figure'),
