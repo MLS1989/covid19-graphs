@@ -81,7 +81,7 @@ app.layout = html.Div([
                                     }
                         ),
                 html.Br(),
-                html.Label('Select date range:   '),
+                html.Label('Select the date range:   '),
                 html.Br(),
                 dcc.DatePickerRange(id='date-picker',
                                 min_date_allowed=datetime(2020,1,1),
@@ -139,7 +139,9 @@ app.layout = html.Div([
                 html.Div([dcc.Markdown(children=text_g2,
                                     style={'padding':'5px',
                                         'border-radius': '3px',
-                                        'box-shadow':'3px 2px 18px 0px rgba(0,0,0,0.25)',}
+                                        'box-shadow':'3px 2px 18px 0px rgba(0,0,0,0.25)',
+                                        'background':'white'},
+                                    className='card'
                                     )]),      
             ], className='col-md-4', style={'paddingTop':'30px'}),
             html.Div([
@@ -163,7 +165,7 @@ app.layout = html.Div([
                                 }),
                 html.Br(),
                 html.Br(),
-                html.Label('Chose date range'),
+                html.Label('Select the date range'),
                 dcc.DatePickerRange(id='date-picker-2',
                                 min_date_allowed=datetime(2020,1,1),
                                 max_date_allowed=datetime.today(),
@@ -187,8 +189,11 @@ app.layout = html.Div([
                                     'layout':{'title':'Data unavailable'}}, )])
             ], className='col-md-8')
         ], className='row')
-                ], className = "container", style={
-                                                    })
+                ],className = "container-fluid-md container", style={
+                    'background':'#E1EDF4',
+                    'padding-top': '20px',
+                    'padding-bottom': '20px'
+                })
 
 @app.callback(Output('my-graph', 'figure'),
             [Input('country-select', 'value'),
@@ -281,7 +286,7 @@ def update_graph_3(country, start_date, end_date, radio):
                 name=i.replace('_',' ').capitalize()) for i in lines
         ]
     layout = go.Layout(title= f"{lines[0].replace('_',' ').capitalize()} and {lines[1].replace('_',' ').capitalize()} for {country}",
-                    hovermode='closest',
+                    hovermode="x unified",
                     legend_orientation="h",
                     )
     fig = {'data':data, 'layout':layout}
