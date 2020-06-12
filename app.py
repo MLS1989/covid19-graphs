@@ -6,6 +6,16 @@ from dash.dependencies import Input, Output, State
 import pandas as pd 
 import numpy as np  
 from datetime import datetime
+import json
+
+
+colors = {
+    'plot':'#2b2d42',
+    'plot_text':'#eb5160',
+    'text':'#E7EEEA',
+    'bcg':'#524E7E'
+
+}
 
 
 # Read the data set 
@@ -29,8 +39,6 @@ dd2_options = []
 for i in df_highs.columns:
     dd2_options.append({'label':i.replace('_',' ').capitalize() , 'value':i})
 
-print(dd2_options)
-
 df_highs.to_csv('test.csv')
 #create app
 app = dash.Dash(__name__)
@@ -47,13 +55,14 @@ for i in df_deaths_cum.columns:
 #create HTML layout
 app.layout = html.Div([
         ### Row One - header ###
-        html.Div([html.Div([html.Img( src='assets/logo2.png')], className='col-12 col-md-3'),
-                html.Div([html.H2('Coronavirus information dashboard')], className='col-12 col-md-9'),
+        html.Div([html.Div([html.Img( src='assets/logo2.png')], className='col-12 col-md-4'),
+                html.Div([html.H1('Coronavirus information dashboard')], className='col-12 col-md-8', style={'color': colors['text']}),
                  ]
                     
             , className='row'),
+        html.Div([html.Hr()]),
         html.Br(),
-        ### Row Two- dropdowns ###
+        ### Row Two- dropdowns and graph 1 ###
         html.Div([
             html.Div([
                 html.Label('Select countries / regions:'),
@@ -61,22 +70,38 @@ app.layout = html.Div([
                                 options=dd_options, 
                                 multi=True,
                                 value=['United Kingdom', 'United States', 'Germany', 'Spain','Brazil'],
-                                style={'padding':'10px'}
+                                style={'padding':'5px',
+                                    'background':colors['plot'],
+                                    
+                                    'border-radius': '3px',
+                                    'box-shadow':'6px 2px 30px 0px rgba(0,0,0,0.75)'
+                                    }
                         ),
-                html.Label('Select date range:'),
+                html.Br(),
+                html.Label('Select date range:   '),
+                html.Br(),
                 dcc.DatePickerRange(id='date-picker',
                                 min_date_allowed=datetime(2020,1,1),
                                 max_date_allowed=datetime.today(),
                                 start_date = datetime(2020,3,1),
                                 end_date=datetime.today(),
-                                style={'padding':'10px'}
+                                style={'padding':'5px',
+                                    'background':colors['plot'],
+                                    
+                                    'border-radius': '3px',
+                                    'box-shadow':'6px 2px 30px 0px rgba(0,0,0,0.75)'}
                             ),
-                html.P('Info about selected countries'),
-                html.P('Country: '),
-                html.P('Population:'),
-                html.P('GDP per capita:'),
-                html.P('Covid cases:'),
-                html.P('Covid deaths:'),
+                html.Br(),
+                html.Br(),
+                html.Div([dcc.Markdown(id='country_info', style={'padding':'15px',
+                                                                'color': colors['text'],
+                                                                'background': colors['plot'],
+                                                                'border-radius': '3px',
+                                                                'box-shadow':'6px 2px 30px 0px rgba(0,0,0,0.75)'},
+                                        children='Hover over a line on the graph to display info about the country!')],
+                                        className="card"),
+                
+                
 
             ], className='col-12 col-md-4'),
                 
@@ -84,15 +109,23 @@ app.layout = html.Div([
                 dcc.Graph(id='my-graph',
                     figure={'data':[{'x':[1,2,3,4],'y':[1,1,1,1]}],
                             'layout':{'title':'Data unavailable'}},
+                    style={}
                     )
             ], className='col-md-8'),
             
         ], className='row'),
+        html.Div([html.Hr()]),
         html.Br(),
+
+        ### Row Three - dropdown, slider and graph 2 ###
         html.Div([
             html.Div([
-                html.Label('Chose data the graph:'), dcc.Dropdown(id='drop-highest', options=dd2_options,
-                                                        value='total_deaths'), 
+                html.Label('Chose data for the graph:'), dcc.Dropdown(id='drop-highest', options=dd2_options,
+                                                        value='total_deaths', style={'background': colors['plot'],
+                                                                                    'color': '#7F7EFF',
+                                                                                    'border-radius': '3px',
+                                                                                    'box-shadow':'6px 2px 30px 0px rgba(0,0,0,0.75)',
+                                                                                    }), 
                 html.Br(),
                 html.Br(),
                 html.Label('Chose number of countries'), dcc.Slider(id='slider-highest', min=1,
@@ -110,7 +143,8 @@ app.layout = html.Div([
         ], className='row')
 
 
-                ], className = "container-fluid")
+                ], className = "container-fluid", style={'backgroundColor':colors['bcg'],
+                                                    })
 
 
 
@@ -131,8 +165,12 @@ def update_graph(countries, start_date, end_date):
     fig = {'data':data,
             'layout':go.Layout(title='Confirmed Covid 19 deaths by country', 
                             yaxis={'title':'confirmed deaths'},
-                            hovermode='x unified',
-                            legend_orientation="h"),}
+                            hovermode='closest',
+                            legend_orientation="h",
+                            plot_bgcolor=colors['plot'],
+                            paper_bgcolor= colors['plot'],
+                            font={'color': colors['plot_text']}
+                            ),}
     return fig
 
 @app.callback(Output('my-bar-chart', 'figure'),
@@ -141,19 +179,42 @@ def update_graph(countries, start_date, end_date):
 def update_bar_graph(dropdown, slider):
 
     df_for_bar = df_highs.nlargest(slider, columns=[dropdown])
-
-    print(df_for_bar)
-    
     
     data = [go.Bar(x=df_for_bar.index, y=df_for_bar[dropdown], marker={'color': df_for_bar[dropdown],
                                                                 'colorscale': 'Burg'} )]
-    
-
     fig = {'data':data,
             'layout':go.Layout(title='Top {} countries with highest number of {}'.format(str(slider), dropdown.replace('_',' ').capitalize()),
                                 xaxis={'title':'countries'},
                                 yaxis={'title':dropdown.replace('_',' ').capitalize()},
-                            )}
+                                plot_bgcolor=colors['plot'],
+                                paper_bgcolor= colors['plot'],
+                                font={'color': colors['plot_text']},
+                                )}
     return fig
+
+
+@app.callback(Output('country_info', 'children'),
+            [Input('country-select', 'value'),
+            Input('my-graph', 'clickData')])
+def country_info(countries, clickData):
+    v_index = clickData['points'][0]['curveNumber']
+
+    selected_country = countries[v_index]
+    population = int(df[df['location']==selected_country]['population'].unique()[0])
+    population_density = round(df[df['location']==selected_country]['population_density'].unique()[0],2)
+    gdp_per_capita = round(df[df['location']==selected_country]['gdp_per_capita'].unique()[0],2)
+    hospital_beds_per_thousand = round(df[df['location']==selected_country]['hospital_beds_per_thousand'].unique()[0],2)
+
+
+    info = f"""
+Selected country: **{selected_country}** \n
+* Population: {population:,} \n
+* Population density: {population_density:,}ppl per km square \n
+* GDP per capita: {gdp_per_capita:,}$ \n
+* Hospital beds: : {hospital_beds_per_thousand:,}per 1000 ppl \n"""
+
+    return info
+
+
 if __name__ == "__main__":
     app.run_server()
