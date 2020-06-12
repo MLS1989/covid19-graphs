@@ -56,7 +56,7 @@ for i in df_deaths_cum.columns:
 app.layout = html.Div([
         ### Row One - header ###
         html.Div([html.Div([html.Img( src='assets/logo2.png')], className='col-12 col-md-4'),
-                html.Div([html.H1('Coronavirus information dashboard')], className='col-12 col-md-8', style={'color': colors['text']}),
+                html.Div([html.H1('Coronavirus information dashboard')], className='col-12 col-md-8', style={'color': 'black'}),
                  ]
                     
             , className='row'),
@@ -71,10 +71,8 @@ app.layout = html.Div([
                                 multi=True,
                                 value=['United Kingdom', 'United States', 'Germany', 'Spain','Brazil'],
                                 style={'padding':'5px',
-                                    'background':colors['plot'],
-                                    
                                     'border-radius': '3px',
-                                    'box-shadow':'6px 2px 30px 0px rgba(0,0,0,0.75)'
+                                    'box-shadow':'3px 2px 18px 0px rgba(0,0,0,0.25)',
                                     }
                         ),
                 html.Br(),
@@ -86,20 +84,17 @@ app.layout = html.Div([
                                 start_date = datetime(2020,3,1),
                                 end_date=datetime.today(),
                                 style={'padding':'5px',
-                                    'background':colors['plot'],
-                                    
                                     'border-radius': '3px',
-                                    'box-shadow':'6px 2px 30px 0px rgba(0,0,0,0.75)'}
+                                    'box-shadow':'3px 2px 18px 0px rgba(0,0,0,0.25)',}
                             ),
                 html.Br(),
                 html.Br(),
-                html.Div([dcc.Markdown(id='country_info', style={'padding':'15px',
-                                                                'color': colors['text'],
-                                                                'background': colors['plot'],
-                                                                'border-radius': '3px',
-                                                                'box-shadow':'6px 2px 30px 0px rgba(0,0,0,0.75)'},
-                                        children='Hover over a line on the graph to display info about the country!')],
-                                        className="card"),
+                html.Div([dcc.Markdown(id='country_info',
+                                     style={'padding':'5px',
+                                        'border-radius': '3px',
+                                        'box-shadow':'3px 2px 18px 0px rgba(0,0,0,0.25)',},
+                                    children='Hover over a line on the graph to display info about the country!')],
+                                    className="card"),
                 
                 
 
@@ -121,18 +116,18 @@ app.layout = html.Div([
         html.Div([
             html.Div([
                 html.Label('Chose data for the graph:'), dcc.Dropdown(id='drop-highest', options=dd2_options,
-                                                        value='total_deaths', style={'background': colors['plot'],
-                                                                                    'color': '#7F7EFF',
+                                                        value='total_deaths', style={
                                                                                     'border-radius': '3px',
-                                                                                    'box-shadow':'6px 2px 30px 0px rgba(0,0,0,0.75)',
+                                                                                    'box-shadow':'3px 2px 18px 0px rgba(0,0,0,0.25)',
                                                                                     }), 
                 html.Br(),
                 html.Br(),
-                html.Label('Chose number of countries'), dcc.Slider(id='slider-highest', min=1,
-                                                                                        max=10,
-                                                                                        step=1,
-                                                                                        value=5,
-                                                                                        marks={1:'1', 5:'5',10:'10',})
+                html.Label('Chose number of countries'), dcc.Slider(
+                                                                id='slider-highest', min=1,
+                                                                max=10,
+                                                                step=1,
+                                                                value=5,
+                                                                marks={1:'1', 5:'5',10:'10',},)
             ], className='col-md-4', style={'paddingTop':'30px'}),
             html.Div([
                 dcc.Graph(id='my-bar-chart',
@@ -140,10 +135,13 @@ app.layout = html.Div([
                                 'layout':{'title': 'Data unavailable'}
                         }
             )], className='col-md-8'),
-        ], className='row')
+        ], className='row'),
+        ### Row Four - dropdown date picker and graph 3 ###
+        
 
 
-                ], className = "container-fluid", style={'backgroundColor':colors['bcg'],
+
+                ], className = "container-fluid", style={
                                                     })
 
 
@@ -167,9 +165,6 @@ def update_graph(countries, start_date, end_date):
                             yaxis={'title':'confirmed deaths'},
                             hovermode='closest',
                             legend_orientation="h",
-                            plot_bgcolor=colors['plot'],
-                            paper_bgcolor= colors['plot'],
-                            font={'color': colors['plot_text']}
                             ),}
     return fig
 
@@ -186,25 +181,21 @@ def update_bar_graph(dropdown, slider):
             'layout':go.Layout(title='Top {} countries with highest number of {}'.format(str(slider), dropdown.replace('_',' ').capitalize()),
                                 xaxis={'title':'countries'},
                                 yaxis={'title':dropdown.replace('_',' ').capitalize()},
-                                plot_bgcolor=colors['plot'],
-                                paper_bgcolor= colors['plot'],
-                                font={'color': colors['plot_text']},
                                 )}
     return fig
 
 
 @app.callback(Output('country_info', 'children'),
             [Input('country-select', 'value'),
-            Input('my-graph', 'clickData')])
-def country_info(countries, clickData):
-    v_index = clickData['points'][0]['curveNumber']
+            Input('my-graph', 'hoverData')])
+def country_info(countries, hoverData):
+    v_index = hoverData['points'][0]['curveNumber']
 
     selected_country = countries[v_index]
     population = int(df[df['location']==selected_country]['population'].unique()[0])
     population_density = round(df[df['location']==selected_country]['population_density'].unique()[0],2)
     gdp_per_capita = round(df[df['location']==selected_country]['gdp_per_capita'].unique()[0],2)
     hospital_beds_per_thousand = round(df[df['location']==selected_country]['hospital_beds_per_thousand'].unique()[0],2)
-
 
     info = f"""
 Selected country: **{selected_country}** \n
