@@ -126,7 +126,7 @@ app.layout = html.Div([
                                                                 id='slider-highest', min=1,
                                                                 max=10,
                                                                 step=1,
-                                                                value=5,
+                                                                value=6,
                                                                 marks={1:'1', 5:'5',10:'10',},)
             ], className='col-md-4', style={'paddingTop':'30px'}),
             html.Div([
@@ -136,15 +136,46 @@ app.layout = html.Div([
                         }
             )], className='col-md-8'),
         ], className='row'),
+        html.Hr(),
+        html.Br(),
         ### Row Four - dropdown date picker and graph 3 ###
-        
-
-
-
+        html.Div([
+            html.Div([
+                html.Label('Chose a country:'),
+                dcc.Dropdown(id='drop-country', options=dd_options, 
+                            value='United Kingdom',
+                            style={
+                                    'border-radius': '3px',
+                                    'box-shadow':'3px 2px 18px 0px rgba(0,0,0,0.25)',
+                                }),
+                html.Br(),
+                html.Br(),
+                html.Label('Chose date range'),
+                dcc.DatePickerRange(id='date-picker-2',
+                                min_date_allowed=datetime(2020,1,1),
+                                max_date_allowed=datetime.today(),
+                                start_date = datetime(2020,3,1),
+                                end_date=datetime.today(),
+                                style={'padding':'5px',
+                                    'border-radius': '3px',
+                                    'box-shadow':'3px 2px 18px 0px rgba(0,0,0,0.25)',}),
+                html.Br(),
+                html.Br(),
+                html.Label('Show cumulative or daily data'),
+                dcc.RadioItems(id='radio', options=[
+                                        {'label': 'Cumulative', 'value': 'C'},
+                                        {'label': 'Daily', 'value': 'D'}
+                                        ],
+                                            value='D')
+            ], className='col-md-4'),
+            html.Div([
+                html.Div([dcc.Graph(id='graph-3',
+                                figure={'data':[{'x':[1,2,3,4],'y':[1,1,1,1]}],
+                                    'layout':{'title':'Data unavailable'}}, )])
+            ], className='col-md-8')
+        ], className='row')
                 ], className = "container-fluid", style={
                                                     })
-
-
 
 @app.callback(Output('my-graph', 'figure'),
             [Input('country-select', 'value'),
@@ -203,8 +234,41 @@ Selected country: **{selected_country}** \n
 * Population density: {population_density:,}ppl per km square \n
 * GDP per capita: {gdp_per_capita:,}$ \n
 * Hospital beds: : {hospital_beds_per_thousand:,}per 1000 ppl \n"""
-
     return info
+
+
+@app.callback(Output('graph-3','figure'),
+            [Input('drop-country','value'),
+            Input('date-picker-2','start_date'),
+            Input('date-picker-2','end_date'),
+            Input('radio', 'value')])
+def update_graph_3(country, start_date, end_date, radio):
+
+    start = datetime.strptime(start_date[0:10], '%Y-%m-%d')
+    end = datetime.strptime(end_date[0:10], '%Y-%m-%d' )
+
+    df_g3 = df[df['location']==country]
+    df_g3.set_index('date', inplace=True)
+    print(df_g3)
+    lines_cumulative = ['total_cases','total_deaths']
+    lines_daily = ['new_cases', 'new_deaths']
+
+    if radio=='C':
+        lines = lines_cumulative
+        print(lines)
+    else:
+        lines = lines_daily
+        print(lines)
+
+    data = [go.Bar(x=df_g3.loc[start_date:end_date].index,
+                y=df_g3.loc[start_date:end_date][i], 
+                name=i.replace('_',' ').capitalize()) for i in lines]
+    layout = go.Layout(title= f"{lines[0].replace('_',' ').capitalize()} and {lines[1].replace('_',' ').capitalize()} for {country}")
+    fig = {'data':data, 'layout':layout}
+
+    
+
+    return fig
 
 
 if __name__ == "__main__":
