@@ -44,6 +44,7 @@ for i in df_highs.columns:
 #create app
 app = dash.Dash(__name__)
 app.title = 'Covid19 Information Page'
+server = app.server
 
 
 #create list of options for multi-dropdown menu
@@ -58,7 +59,7 @@ text_g2 = """ Please note that the 'New cases' and 'New deaths' in the dropdown 
 
 
 #create HTML layout
-app.layout = html.Div([
+app.layout = html.Div([html.Div([
         ### Row One - header ###
         html.Div([html.Div([html.Img( src='assets/logo2.png')], className='col-12 col-md-4'),
                 html.Div([html.H1('Coronavirus information dashboard')], className='col-12 col-md-8', style={'color': 'black'}),
@@ -188,12 +189,27 @@ app.layout = html.Div([
                                 figure={'data':[{'x':[1,2,3,4],'y':[1,1,1,1]}],
                                     'layout':{'title':'Data unavailable'}}, )])
             ], className='col-md-8')
-        ], className='row')
+        ], className='row'),
+        html.Br(),
+        html.Br(),
+        html.Br(),
+        
+
                 ],className = "container-fluid-md container", style={
                     'background':'#E1EDF4',
                     'padding-top': '20px',
                     'padding-bottom': '20px'
-                })
+                }),
+                html.Div([
+                    html.Div([dcc.Markdown('''This dashboard was built in Python 3.8 using Plotly, Dash, and Pandas.'
+If you have any queries, please write to mls.testapps@gmail.com
+All Covid 19 data comes from [www.ourworldindata.org](https://ourworldindata.org/)
+Thanks for visiting!
+''')])
+                    
+                ],className='container ft')
+])
+        
 
 @app.callback(Output('my-graph', 'figure'),
             [Input('country-select', 'value'),
@@ -291,10 +307,8 @@ def update_graph_3(country, start_date, end_date, radio):
                     )
     fig = {'data':data, 'layout':layout}
 
-    
 
     return fig
-
 
 if __name__ == "__main__":
     app.run_server()
