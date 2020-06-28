@@ -20,6 +20,10 @@ except:
     df = pd.read_csv('owid-covid-data.csv')
     print('>>> loaded data from local csv')
 
+# Read lat and long data 
+locations = pd.read_csv('datasets_2312_3908_countries.csv')
+print(locations)
+
 
 
 df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
@@ -40,6 +44,15 @@ dd2_options = []
 for i in df_highs.columns:
     dd2_options.append({'label':i.replace('_',' ').capitalize() , 'value':i})
 
+df_map = pd.pivot_table(df, index=['location'], values=
+            ['iso_code','total_cases', 'total_deaths', 'total_tests_per_thousand'],
+            aggfunc=np.max)
+df_map.drop('World', inplace=True)
+df_map = pd.merge(df_map, locations, on='iso_code', how='left' )
+df_map['total_tests_per_thousand'] = df_map['total_tests_per_thousand'].fillna(0)
+df_map['total_cases'] = df_map['total_cases'].fillna(0)
+df_map['total_deaths'] = df_map['total_deaths'].fillna(0)
+print(df_map)
 
 #create app
 app = dash.Dash(__name__)
@@ -67,8 +80,27 @@ app.layout = html.Div([html.Div([
                     
             , className='row'),
         html.Div([html.Hr()]),
+        ### Row Two (a) - radio buttons
+        html.Div([
+            html.Div([dcc.RadioItems(id="radio-map", options=[
+                        {'label': 'Total cases  ', 'value': 'total_cases'},
+                        {'label': 'Total deaths  ', 'value': 'total_deaths'},
+                        {'label': 'Total tests per 1k people  ', 'value': 'total_tests_per_thousand'}
+                    ],
+                    value='total_cases',
+                    )])
+        ],className="row"),
+        ### Row Two - Map ###
+        html.Div([html.Div([
+            html.Div([dcc.Graph(id="map")])
+        ], className="graphWrapper", style={'padding':'5px',
+                                    'border-radius': '3px',
+                                    'width':'95%',
+                                    'box-shadow':'3px 2px 18px 0px rgba(0,0,0,0.25)',
+                                    })],className="row justify-content-center"),
         html.Br(),
-        ### Row Two- dropdowns and graph 1 ###
+        html.Hr(),
+        ### Row Three- dropdowns and graph 1 ###
         html.Div([
             html.Div([
                 html.Label('Select countries / regions:'),
@@ -118,7 +150,7 @@ app.layout = html.Div([html.Div([
         html.Div([html.Hr()]),
         html.Br(),
 
-        ### Row Three - dropdown, slider and graph 2 ###
+        ### Row Four - dropdown, slider and graph 2 ###
         html.Div([
             html.Div([
                 html.Label('Chose data for the graph:'), dcc.Dropdown(id='drop-highest', options=dd2_options,
@@ -154,7 +186,7 @@ app.layout = html.Div([html.Div([
         ], className='row'),
         html.Hr(),
         html.Br(),
-        ### Row Four - dropdown date picker and graph 3 ###
+        ### Row Five  - dropdown date picker and graph 3 ###
         html.Div([
             html.Div([
                 html.Label('Chose a country:'),
@@ -209,7 +241,61 @@ Thanks for visiting!
                     
                 ],className='container ft')
 ])
-        
+
+@app.callback(Output('map', 'figure'),
+            [Input('radio-map','value')])
+def update_map(choice):
+
+    title = choice.replace('_',' ').capitalize()
+    fig = go.Figure()
+    
+    scales = {'total_cases':1000,
+            'total_deaths':200,
+            'total_tests_per_thousand':0.3}
+    colors = {'total_cases':'#B80C09',
+            'total_deaths':'#040F16',
+            'total_tests_per_thousand':'#01BAEF'}
+
+    fig.add_trace(go.Scattergeo(
+        lon = df_map['longitude'],
+        lat = df_map['latitude'],
+        text = df_map['name'],
+        customdata= df_map,
+        hovertemplate=
+            '%{text} <br>'+
+            "Number of tests per 1k people %{customdata[3]:,.2f} <br>"+
+            "Number of total cases %{customdata[1]:,.0f}<br>"+
+            "Number of deaths %{customdata[2]:,.0f}",
+        marker = dict(
+            size = df_map[choice]/scales[choice]+5,
+            sizeref = 1,
+            sizemin = 0,
+            #colorscale=[[0, 'rgb(0,0,255)'], [1, 'rgb(255,0,0)']],
+            autocolorscale=False,
+            color=colors[choice],
+            line_color='rgb(40,40,40)',
+            line_width=0.5,
+            sizemode = 'area',
+            opacity = 0.5
+        )
+    ))
+    fig.update_layout(
+        title_text = f'Number of {title}',
+        margin=dict(t=30, b=0, l=0, r=0),
+        geo = dict(
+            scope = 'world',
+            showcountries = True,
+            showframe = False,
+            showcoastlines = True,
+            landcolor = "rgb(229, 229, 229)",
+            countrycolor = "white" ,
+            coastlinecolor = "white",
+        )
+    )
+    
+
+
+    return fig    
 
 @app.callback(Output('my-graph', 'figure'),
             [Input('country-select', 'value'),
@@ -311,4 +397,4 @@ def update_graph_3(country, start_date, end_date, radio):
     return fig
 
 if __name__ == "__main__":
-    app.run_server()
+    app.run_server(use_reloader=True)
