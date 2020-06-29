@@ -6,23 +6,25 @@ from dash.dependencies import Input, Output, State
 import pandas as pd 
 import numpy as np  
 from datetime import datetime
-import json
 
 
 # Try to read the dataset form the internet if not available read local csv
 
 url = 'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv'
+countries_url = 'https://raw.githubusercontent.com/MLS1989/FX_data/master/datasets_2312_3908_countries.csv'
 
 try:
     df = pd.read_csv(url)
     print('>>> loaded data from gitHub')
+    locations = pd.read_csv(countries_url)
+    print('>>> Lat nad long data read from gitHub')
+
 except:
     df = pd.read_csv('owid-covid-data.csv')
     print('>>> loaded data from local csv')
+    locations = pd.read_csv('datasets_2312_3908_countries.csv')
 
-# Read lat and long data 
-locations = pd.read_csv('datasets_2312_3908_countries.csv')
-print(locations)
+
 
 
 
