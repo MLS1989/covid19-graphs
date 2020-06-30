@@ -239,6 +239,7 @@ app.layout = html.Div([html.Div([
 If you have any queries, please write to mls.testapps@gmail.com
 All Covid 19 data comes from [www.ourworldindata.org](https://ourworldindata.org/)
 Thanks for visiting!
+If you found any of my dashboards useful, consider a small donation to keep this web app on the server. You can do this and download the source code [here](https://buymlscoffee.herokuapp.com/.)
 ''')])
                     
                 ],className='container ft')
